@@ -1,0 +1,145 @@
+----- GAMESS execution script 'rungms' -----
+This job is running on host ccp01
+under operating system Linux at Thu Jan 7 15:16:47 CET 2021
+Available scratch disk space (Kbyte units) at beginning of the job is
+Filesystem     1K-blocks      Used Available Use% Mounted on
+/dev/sda2      848504916 180186268 625147260  23% /local
+GAMESS temporary binary files will be written to /local/shinde/tmp.LZqOuf1Aa2
+GAMESS supplementary output files will be written to /home/shinde/calcs/cn3/gamess
+Copying input file cn3_rhf_BFD-Da.inp to your run's scratch directory...
+
+ Distributed Data Interface kickoff program.
+ Initiating 1 compute processes on 1 nodes to run the following command:
+ /software/gamess_sockets/gamess.Apr2018.x cn3_rhf_BFD-Da 
+
+          ******************************************************
+          *         GAMESS VERSION = 14 FEB 2018 (R1)         *
+          *             FROM IOWA STATE UNIVERSITY             *
+          * M.W.SCHMIDT, K.K.BALDRIDGE, J.A.BOATZ, S.T.ELBERT, *
+          *   M.S.GORDON, J.H.JENSEN, S.KOSEKI, N.MATSUNAGA,   *
+          *          K.A.NGUYEN, S.J.SU, T.L.WINDUS,           *
+          *       TOGETHER WITH M.DUPUIS, J.A.MONTGOMERY       *
+          *         J.COMPUT.CHEM.  14, 1347-1363(1993)        *
+          **************** 64 BIT LINUX VERSION ****************
+
+  SINCE 1993, STUDENTS AND POSTDOCS WORKING AT IOWA STATE UNIVERSITY
+  AND ALSO IN THEIR VARIOUS JOBS AFTER LEAVING ISU HAVE MADE IMPORTANT
+  CONTRIBUTIONS TO THE CODE:
+     IVANA ADAMOVIC, CHRISTINE AIKENS, YURI ALEXEEV, POOJA ARORA,
+     ANDREY ASADCHEV, ROB BELL, PRADIPTA BANDYOPADHYAY, JONATHAN BENTZ,
+     BRETT BODE, KURT BRORSEN, CALEB CARLIN, GALINA CHABAN, WEI CHEN,
+     CHEOL HO CHOI, PAUL DAY, ALBERT DEFUSCO, NUWAN DESILVA, TIM DUDLEY,
+     DMITRI FEDOROV, ALEX FINDLATER, GRAHAM FLETCHER, MARK FREITAG,
+     KURT GLAESEMANN, ANASTASIA GUININA,
+     DAN KEMP, GRANT MERRILL, NORIYUKI MINEZAWA, JONATHAN MULLIN,
+     TAKESHI NAGATA, SEAN NEDD, HEATHER NETZLOFF, BOSILJKA NJEGIC, RYAN OLSON,
+     MIKE PAK, BUU PHAM,
+     SPENCER PRUITT, LUKE ROSKOP, JIM SHOEMAKER, LYUDMILA SLIPCHENKO,
+     TONY SMITH, SAROM SOK LEANG, JIE SONG, TETSUYA TAKETSUGU, SIMON WEBB,
+     PENG XU, SOOHAENG YOO, FEDERICO ZAHARIEV
+
+  ADDITIONAL CODE HAS BEEN PROVIDED BY COLLABORATORS IN OTHER GROUPS:
+     IOWA STATE UNIVERSITY:
+          JOE IVANIC, AARON WEST, LAIMUTIS BYTAUTAS, KLAUS RUEDENBERG
+     UNIVERSITY OF TOKYO: KIMIHIKO HIRAO, TAKAHITO NAKAJIMA,
+          TAKAO TSUNEDA, MUNEAKI KAMIYA, SUSUMU YANAGISAWA,
+          KIYOSHI YAGI, MAHITO CHIBA, SEIKEN TOKURA, NAOAKI KAWAKAMI
+     UNIVERSITY OF AARHUS: FRANK JENSEN
+     UNIVERSITY OF IOWA: VISVALDAS KAIRYS, HUI LI
+     NATIONAL INST. OF STANDARDS AND TECHNOLOGY: WALT STEVENS, DAVID GARMER
+     UNIVERSITY OF PISA: BENEDETTA MENNUCCI, JACOPO TOMASI
+     UNIVERSITY OF MEMPHIS: HENRY KURTZ, PRAKASHAN KORAMBATH
+     UNIVERSITY OF ALBERTA: TOBY ZENG, MARIUSZ KLOBUKOWSKI
+     UNIVERSITY OF NEW ENGLAND: MARK SPACKMAN
+     MIE UNIVERSITY: HIROAKI UMEDA
+     NAT. INST. OF ADVANCED INDUSTRIAL SCIENCE AND TECHNOLOGY: KAZUO KITAURA
+     MICHIGAN STATE UNIVERSITY:
+          KAROL KOWALSKI, MARTA WLOCH, JEFFREY GOUR, JESSE LUTZ,
+          WEI LI, PIOTR PIECUCH
+     UNIVERSITY OF SILESIA: MONIKA MUSIAL, STANISLAW KUCHARSKI
+     FACULTES UNIVERSITAIRES NOTRE-DAME DE LA PAIX:
+          OLIVIER QUINET, BENOIT CHAMPAGNE
+     UNIVERSITY OF CALIFORNIA - SANTA BARBARA: BERNARD KIRTMAN
+     INSTITUTE FOR MOLECULAR SCIENCE:
+          KAZUYA ISHIMURA, MICHIO KATOUDA, AND SHIGERU NAGASE
+     UNIVERSITY OF NOTRE DAME: ANNA POMOGAEVA, DAN CHIPMAN
+     KYUSHU UNIVERSITY:
+          HARUYUKI NAKANO,
+          FENG LONG GU, JACEK KORCHOWIEC, MARCIN MAKOWSKI, AND YURIKO AOKI,
+          HIROTOSHI MORI AND EISAKU MIYOSHI
+     PENNSYLVANIA STATE UNIVERSITY:
+          TZVETELIN IORDANOV, CHET SWALINA, JONATHAN SKONE,
+          SHARON HAMMES-SCHIFFER
+     WASEDA UNIVERSITY:
+          MASATO KOBAYASHI, TOMOKO AKAMA, TSUGUKI TOUMA,
+          TAKESHI YOSHIKAWA, YASUHIRO IKABATA, JUNJI SEINO,
+          YUYA NAKAJIMA, HIROMI NAKAI
+     NANJING UNIVERSITY: SHUHUA LI
+     UNIVERSITY OF NEBRASKA:
+          PEIFENG SU, DEJUN SI, NANDUN THELLAMUREGE, YALI WANG, HUI LI
+     UNIVERSITY OF ZURICH: ROBERTO PEVERATI, KIM BALDRIDGE
+     N. COPERNICUS UNIVERSITY AND JACKSON STATE UNIVERSITY:
+          MARIA BARYSZ
+     UNIVERSITY OF COPENHAGEN: Jimmy Kromann, CASPER STEINMANN
+     TOKYO INSTITUTE OF TECHNOLOGY: HIROYA NAKATA
+     NAGOYA UNIVERSITY: YOSHIO NISHIMOTO, STEPHAN IRLE
+     MOSCOW STATE UNIVERSITY: VLADIMIR MIRONOV
+
+ EXECUTION OF GAMESS BEGUN Thu Jan  7 15:16:47 2021
+
+            ECHO OF THE FIRST FEW INPUT CARDS -
+ INPUT CARD> $CONTRL                                                                        
+ INPUT CARD>        SCFTYP=RHF                                                              
+ INPUT CARD>        ECP=READ                                                                
+ INPUT CARD>        RUNTYP=ENERGY                                                           
+ INPUT CARD>        COORD=UNIQUE                                                            
+ INPUT CARD>        MULT=1                                                                  
+ INPUT CARD>        NORMF=1                                                                 
+ INPUT CARD>        UNITS=ANGS                                                              
+ INPUT CARD>        ICHARG=+1                                                               
+ INPUT CARD> $END                                                                           
+ INPUT CARD> $SYSTEM                                                                        
+ INPUT CARD>        TIMLIM=3000                                                             
+ INPUT CARD>        MWORDS=100                                                              
+ INPUT CARD> $END                                                                           
+ INPUT CARD> $BASIS                                                                         
+ INPUT CARD>        EXTFIL=.TRUE.                                                           
+ INPUT CARD>        GBASIS=BFD-Da                                                           
+ INPUT CARD> $END                                                                           
+ INPUT CARD> $DATA                                                                          
+ INPUT CARD>-  cn3: Cyanine dye with 3 heavy atoms. Geometry PBE0/cc-pVQZ.                  
+ INPUT CARD>Cnv 2                                                                           
+ INPUT CARD>                                                                                
+ INPUT CARD>  N           7.0      1.1580870000     0.0000000000    -0.1742150000           
+ INPUT CARD>  C           6.0      0.0000000000     0.0000000000     0.4241650000           
+ INPUT CARD>  H           1.0      0.0000000000     0.0000000000     1.5087040000           
+ INPUT CARD>  H           1.0      1.2583600000     0.0000000000    -1.1784870000           
+ INPUT CARD>  H           1.0      2.0051120000     0.0000000000     0.3711430000           
+ INPUT CARD> $END                                                                           
+ INPUT CARD>                                                                                
+ INPUT CARD> $ECP                                                                           
+ INPUT CARD>N-ECP       GEN 2 1                                                             
+ INPUT CARD>3                                                                               
+ INPUT CARD>   5.00000000 1 9.23501007                                                      
+ INPUT CARD>  46.17505034 3 7.66830008                                                      
+ INPUT CARD> -30.18893534 2 7.34486070                                                      
+ INPUT CARD>1                                                                               
+ INPUT CARD>  31.69720409 2 6.99536540                                                      
+ INPUT CARD>N-ECP                                                                           
+ INPUT CARD>C-ECP       GEN 2 1                                                             
+ INPUT CARD>3                                                                               
+ INPUT CARD>   4.00000000 1 8.35973821                                                      
+ INPUT CARD>  33.43895285 3 4.48361888                                                      
+ INPUT CARD> -19.17537323 2 3.93831258                                                      
+ INPUT CARD>1                                                                               
+ INPUT CARD>  22.55164191 2 5.02991637                                                      
+ INPUT CARD>H-ECP  GEN 0 0                                                                  
+ INPUT CARD>3                                                                               
+ INPUT CARD>   1.000000000000 1 25.000000000000                                             
+ INPUT CARD>   25.00000000000 3 10.821821902641                                             
+ INPUT CARD>  -8.228005709676 2 9.368618758833                                              
+  100000000 WORDS OF MEMORY AVAILABLE
+
+     $BASIS REQUESTS READING THE "BFD-DA  " BASIS SET FROM AN EXTERNAL FILE
+
+
