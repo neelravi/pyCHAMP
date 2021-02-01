@@ -22,6 +22,26 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="setup.py" />
+    <Compile Include="tests\pytests.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\pychampwrite.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\pychampread.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="doc\" />
+    <Folder Include="utils\" />
+    <Folder Include="share\" />
+    <Folder Include="src\" />
+    <Folder Include="tests\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="doc\WebPage1.html" />
+    <Content Include="pytest.ini" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
