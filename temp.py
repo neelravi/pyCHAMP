@@ -13,6 +13,7 @@ for filename in ["piece.txt"]:
 
     print(dir(data))
     print(f"There are {data.natom} atoms and {data.nbasis} number of cartesian basis")
+    print(f"There are charges {data.charge} ")
 
     for element in range(len(data.atomnos)):
         print(data.atomnos[element], data.atomcoords[0][element])
@@ -40,7 +41,7 @@ for filename in ["piece.txt"]:
     
     
 
-    pychamp.io.write_champ_old_sym(data, outputdest="rhf.sym")
+    pychamp.io.write_champ_old_sym(data, outputdest="rhf" + filename)
 
 
     # print("sym_labels", len(counts), len(data.mosyms[0]))

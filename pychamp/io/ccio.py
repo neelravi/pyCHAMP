@@ -319,7 +319,8 @@ def qcwrite(ccobj, outputtype=None, outputdest=None,
 
 
 def write_champ_old_sym(qcobj, outputdest=None):
-    """Writes the parsed symmetry data from the quantum chemistry calculation to old format of champ .sym file.
+    """Writes the parsed geometry, symmetry, determinants, MO coefficients data from the quantum 
+    chemistry calculation to old format of champ .sym, .geom, .det, and .lcao file.
 
     Inputs:
         qcobj - Either a job (from ccopen) or a data (from job.parse()) object
@@ -343,13 +344,13 @@ def write_champ_old_sym(qcobj, outputdest=None):
     # If the output filename is mentioned, then write to that file
     # This will write in the old format that CHAMP recognizes.
 
-    values, counts = numpy.unique(qcobj.mosyms, return_counts=True)
-
 
     if outputdest is not None:
         if isinstance(outputdest, str):
-            with open(outputdest, 'w') as file:
+            ## Write down a symmetry file in old champ format
+            with open(outputdest + ".sym", 'w') as file:
                 
+                values, counts = numpy.unique(qcobj.mosyms, return_counts=True)                
                 # point group symmetry independent line printed below                
                 file.write("sym_labels " + str(len(counts)) + " " + str(len(qcobj.mosyms[0]))+"\n")
 
@@ -367,6 +368,26 @@ def write_champ_old_sym(qcobj, outputdest=None):
                                 file.write(str(val)+" ")
                     file.write("\n")
                 file.write("end\n")                
+            file.close()
+
+
+            ## Write down a geometry file in old champ format
+            with open(outputdest + ".geo", 'w') as file:
+                
+                # header line printed below                
+                file.write("# Comments about the system being studied \n")
+                file.write("&atoms nctype " + str(len(set(qcobj.atomnos))) + " natom " + str(qcobj.natom) + "\n" )
+                file.write("&atoms_types " + str(len(set(qcobj.atomnos))) + " natom " + str(qcobj.natom) + "\n" )                
+                file.write("geometry\n")                
+
+                # for element in range(len(data.atomnos)):
+                #     print(data.atomnos[element], data.atomcoords[0][element])
+
+                file.write("end\n")                
+                file.write("znuc\n")                                
+
+                file.write("end\n")                
+            file.close()
 
 
         elif isinstance(outputdest, io.IOBase):
