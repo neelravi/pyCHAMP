@@ -17,13 +17,13 @@ import os
 import random
 import sys
 import zipfile
-#from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 
 import numpy
 
-#from cclib.parser import utils
-#from cclib.parser.data import ccData
-#from cclib.parser.data import ccData_optdone_bool
+from pychamp.parser import utils
+from pychamp.parser.data import ccData
+from pychamp.parser.data import ccData_optdone_bool
 
 
 # This seems to avoid a problem with Avogadro.
@@ -168,7 +168,7 @@ def openlogfile(filename, object=None):
         return fileinput.input(filename, openhook=fileinput.hook_compressed)
 
 
-class Logfile():
+class Logfile(ABC):
     """Abstract class for logfile objects.
 
     Subclasses defined by cclib:

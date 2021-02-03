@@ -1,17 +1,12 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021, the TREX development team
-#
-# This file is part of TREX (http://trex-coe.eu) and is distributed under
-# the terms of the [] License.
-
 
 """Parser for GAMESS(US) output files"""
 
 
 import re
-import numpy as np
+
+import numpy
 
 
 from pychamp.parser import logfileparser
@@ -19,7 +14,7 @@ from pychamp.parser import utils
 
 
 class GAMESS(logfileparser.Logfile):
-    """A GAMESS output/log file."""
+    """A GAMESS log file."""
 
     # Used to index self.scftargets[].
     SCFRMS, SCFMAX, SCFENERGY = list(range(3))
@@ -56,6 +51,7 @@ class GAMESS(logfileparser.Logfile):
                 'BFD-Qpa'       : 'VQZaug', \
                 'BFD-Tpa_nof'   : 'VTZaugnof', \
                 'BFD-Qpa_nof'   : 'VQZaugnof'}
+
 
 
     def __init__(self, *args, **kwargs):
@@ -95,10 +91,8 @@ class GAMESS(logfileparser.Logfile):
     def extract(self, inputfile, line):
         """Extract information from the file object inputfile."""
 
-        # Extract the version number from the log file
-
         if "GAMESS VERSION =" in line:
-            # ...so avoid overwriting it if it is already set this field.
+            # ...so avoid overwriting it if Firefly already set this field.
             if "package_version" not in self.metadata:
                 tokens = line.split()
                 day, month, year = tokens[4:7]
@@ -122,23 +116,12 @@ class GAMESS(logfileparser.Logfile):
             if len(self.metadata["methods"]) == 0:
                 self.metadata["methods"].append(method)
 
-        # extract whether doing pseudopotential calculations
-        if line[1:4] == "ECP":
-            method = line.split()[0][4:]
-            if len(self.metadata["methods"]) == 0:
-                self.metadata["methods"].append(method)
-
-
-
         # extract the basis set name
         if line[5:11] == "GBASIS":
             basnm1 = line.split()[0][7:]
             if basnm1 in self.dunningbas:
                 self.metadata["basis_set"] = self.dunningbas[basnm1]
             else:
-                if basnm1[0:3] == "BFD-Da":
-                    # Put the basis set fullaname in the metadata list
-                    self.metadata["methods"].append(basnm1)
                 if basnm1 == "PM3" or basnm1 == "AM1":
                     self.metadata["methods"].append(basnm1)
                 if basnm1 == "STO" :
@@ -206,7 +189,7 @@ class GAMESS(logfileparser.Logfile):
         if line[10:18] == "OPTTOL =":
             if not hasattr(self, "geotargets"):
                 opttol = float(line.split()[2])
-                self.geotargets = np.array([opttol, 3. / opttol], "d")
+                self.geotargets = numpy.array([opttol, 3. / opttol], "d")
 
         # Has to deal with such lines as:
         #  FINAL R-B3LYP ENERGY IS     -382.0507446475 AFTER  10 ITERATIONS
@@ -216,7 +199,8 @@ class GAMESS(logfileparser.Logfile):
             if not hasattr(self, "scfenergies"):
                 self.scfenergies = []
             temp = line.split()
-            self.scfenergies.append(utils.convertor(float(temp[temp.index("IS") + 1]), "hartree", "eV"))
+####        self.scfenergies.append(utils.convertor(float(temp[temp.index("IS") + 1]), "hartree", "eV"))
+            self.scfenergies.append(float(temp[temp.index("IS") + 1]))            
         # Empirical dispersion: first is GAMESS-US, second is Firefly
         if any(
             line.find(dispersion_trigger) == 1
@@ -227,96 +211,7 @@ class GAMESS(logfileparser.Logfile):
             dispersion = utils.convertor(float(line.split()[-1]), "hartree", "eV")
             self.append_attribute("dispersionenergies", dispersion)
 
-        # For total energies after Moller-Plesset corrections, the output looks something like this:
-        #
-        # RESULTS OF MOLLER-PLESSET 2ND ORDER CORRECTION ARE
-        #         E(0)=      -285.7568061536
-        #         E(1)=         0.0
-        #         E(2)=        -0.9679419329
-        #       E(MP2)=      -286.7247480864
-        # where E(MP2) = E(0) + E(2)
-        #
-        # With GAMESS-US 12 Jan 2009 (R3), the preceding text is different:
-        #      DIRECT 4-INDEX TRANSFORMATION
-        #      SCHWARZ INEQUALITY TEST SKIPPED          0 INTEGRAL BLOCKS
-        #                     E(SCF)=       -76.0088477471
-        #                       E(2)=        -0.1403745370
-        #                     E(MP2)=       -76.1492222841
-        #
-        # With GAMESS-US 20 APR 2017 (R1), the following block may be present:
-        #       SCHWARZ INEQUALITY TEST SKIPPED          0 INTEGRAL BLOCKS
-        # ... END OF INTEGRAL TRANSFORMATION ...
 
-        if line.find("RESULTS OF MOLLER-PLESSET") >= 0 or line[6:37] == "SCHWARZ INEQUALITY TEST SKIPPED":
-
-            if not hasattr(self, "mpenergies"):
-                self.mpenergies = []
-
-            line = next(inputfile)
-            # Each iteration has a new print-out
-            if "END OF INTEGRAL TRANSFORMATION" not in line:
-                self.mpenergies.append([])
-
-                # GAMESS-US presently supports only second order corrections (MP2)
-                # PC GAMESS also has higher levels (3rd and 4th), with different output
-                # Only the highest level MP4 energy is gathered (SDQ or SDTQ)
-                # Loop breaks when substring "DONE WITH MPn ENERGY" is encountered,
-                # where n=2, 3 or 4.
-                while "DONE WITH MP" not in line:
-
-                    if len(line.split()) > 0:
-                        # Only up to MP2 correction
-                        if line.split()[0] == "E(MP2)=":
-                            self.metadata["methods"].append("MP2")
-                            mp2energy = float(line.split()[1])
-                            self.mpenergies[-1].append(utils.convertor(mp2energy, "hartree", "eV"))
-                        # MP2 before higher order calculations
-                        if line.split()[0] == "E(MP2)":
-                            mp2energy = float(line.split()[2])
-                            self.mpenergies[-1].append(utils.convertor(mp2energy, "hartree", "eV"))
-                        if line.split()[0] == "E(MP3)":
-                            self.metadata["methods"].append("MP3")
-                            mp3energy = float(line.split()[2])
-                            self.mpenergies[-1].append(utils.convertor(mp3energy, "hartree", "eV"))
-                        if line.split()[0] in ["E(MP4-SDQ)", "E(MP4-SDTQ)"]:
-                            self.metadata["methods"].append("MP4")
-                            mp4energy = float(line.split()[2])
-                            self.mpenergies[-1].append(utils.convertor(mp4energy, "hartree", "eV"))
-                    line = next(inputfile)
-
-        # Total energies after Coupled Cluster calculations
-        # Only the highest Coupled Cluster level result is gathered
-        if line[12:23] == "CCD ENERGY:":
-            self.metadata["methods"].append("CCD")
-            if not hasattr(self, "ccenergies"):
-                self.ccenergies = []
-            ccenergy = float(line.split()[2])
-            self.ccenergies.append(utils.convertor(ccenergy, "hartree", "eV"))
-        if line.find("CCSD") >= 0 and line.split()[0:2] == ["CCSD", "ENERGY:"]:
-            self.metadata["methods"].append("CCSD")
-            if not hasattr(self, "ccenergies"):
-                self.ccenergies = []
-            ccenergy = float(line.split()[2])
-            line = next(inputfile)
-            if line[8:23] == "CCSD[T] ENERGY:":
-                self.metadata["methods"].append("CCSD[T]")
-                ccenergy = float(line.split()[2])
-                line = next(inputfile)
-                if line[8:23] == "CCSD(T) ENERGY:":
-                    self.metadata["methods"].append("CCSD(T)")
-                    ccenergy = float(line.split()[2])
-            self.ccenergies.append(utils.convertor(ccenergy, "hartree", "eV"))
-
-        if "T1 DIAGNOSTIC" in line:
-            self.metadata["t1_diagnostic"] = float(line.split()[3])
-
-        # Also collect MP2 energies, which are always calculated before CC
-        if line[8:23] == "MBPT(2) ENERGY:":
-            if not hasattr(self, "mpenergies"):
-                self.mpenergies = []
-            self.mpenergies.append([])
-            mp2energy = float(line.split()[2])
-            self.mpenergies[-1].append(utils.convertor(mp2energy, "hartree", "eV"))
 
         # Extract charge and multiplicity
         if line[1:19] == "CHARGE OF MOLECULE":
@@ -404,7 +299,7 @@ class GAMESS(logfileparser.Logfile):
                 #   by sqrt(2) so that they normalize to 1.
                 # With DETS, both alpha and beta excitations are printed.
                 # if self.cihamtyp == "saps":
-                #    coeff /= np.sqrt(2.0)
+                #    coeff /= numpy.sqrt(2.0)
                 CIScontribs.append([(fromMO, MOtype), (toMO, MOtype), coeff])
                 line = next(inputfile)
             self.etsecs.append(CIScontribs)
@@ -529,46 +424,46 @@ class GAMESS(logfileparser.Logfile):
             if etsyms:
                 self.etsyms = etsyms
 
-        # Maximum and RMS gradients.
-        if "MAXIMUM GRADIENT" in line or "RMS GRADIENT" in line:
+        # # Maximum and RMS gradients.
+        # if "MAXIMUM GRADIENT" in line or "RMS GRADIENT" in line:
 
-            parts = line.split()
+        #     parts = line.split()
 
-            # Avoid parsing the following...
+        #     # Avoid parsing the following...
 
-            ## YOU SHOULD RESTART "OPTIMIZE" RUNS WITH THE COORDINATES
-            ## WHOSE ENERGY IS LOWEST.  RESTART "SADPOINT" RUNS WITH THE
-            ## COORDINATES WHOSE RMS GRADIENT IS SMALLEST.  THESE ARE NOT
-            ## ALWAYS THE LAST POINT COMPUTED!
+        #     ## YOU SHOULD RESTART "OPTIMIZE" RUNS WITH THE COORDINATES
+        #     ## WHOSE ENERGY IS LOWEST.  RESTART "SADPOINT" RUNS WITH THE
+        #     ## COORDINATES WHOSE RMS GRADIENT IS SMALLEST.  THESE ARE NOT
+        #     ## ALWAYS THE LAST POINT COMPUTED!
 
-            if parts[0] not in ["MAXIMUM", "RMS", "(1)"]:
-                return
+        #     if parts[0] not in ["MAXIMUM", "RMS", "(1)"]:
+        #         return
 
-            if not hasattr(self, "geovalues"):
-                self.geovalues = []
+        #     if not hasattr(self, "geovalues"):
+        #         self.geovalues = []
 
-            # Newer versions (around 2006) have both maximum and RMS on one line:
-            #       MAXIMUM GRADIENT =  0.0531540    RMS GRADIENT = 0.0189223
-            if len(parts) == 8:
-                maximum = float(parts[3])
-                rms = float(parts[7])
+        #     # Newer versions (around 2006) have both maximum and RMS on one line:
+        #     #       MAXIMUM GRADIENT =  0.0531540    RMS GRADIENT = 0.0189223
+        #     if len(parts) == 8:
+        #         maximum = float(parts[3])
+        #         rms = float(parts[7])
 
-            # In older versions of GAMESS, this spanned two lines, like this:
-            #       MAXIMUM GRADIENT =    0.057578167
-            #           RMS GRADIENT =    0.027589766
-            if len(parts) == 4:
-                maximum = float(parts[3])
-                line = next(inputfile)
-                parts = line.split()
-                rms = float(parts[3])
+        #     # In older versions of GAMESS, this spanned two lines, like this:
+        #     #       MAXIMUM GRADIENT =    0.057578167
+        #     #           RMS GRADIENT =    0.027589766
+        #     if len(parts) == 4:
+        #         maximum = float(parts[3])
+        #         line = next(inputfile)
+        #         parts = line.split()
+        #         rms = float(parts[3])
 
-            # FMO also prints two final one- and two-body gradients (see exam37):
-            #   (1) MAXIMUM GRADIENT =  0.0531540    RMS GRADIENT = 0.0189223
-            if len(parts) == 9:
-                maximum = float(parts[4])
-                rms = float(parts[8])
+        #     # FMO also prints two final one- and two-body gradients (see exam37):
+        #     #   (1) MAXIMUM GRADIENT =  0.0531540    RMS GRADIENT = 0.0189223
+        #     if len(parts) == 9:
+        #         maximum = float(parts[4])
+        #         rms = float(parts[8])
 
-            self.geovalues.append([maximum, rms])
+        #     self.geovalues.append([maximum, rms])
 
         # This is the input orientation, which is the only data available for
         # SP calcs, but which should be overwritten by the standard orientation
@@ -740,202 +635,7 @@ class GAMESS(logfileparser.Logfile):
                 line = next(inputfile)
             self.scfvalues.append(values)
 
-        # Extract normal coordinate analysis, including vibrational frequencies (vibfreq),
-        # IT intensities (vibirs) and displacements (vibdisps).
-        #
-        # This section typically looks like the following in GAMESS-US:
-        #
-        # MODES 1 TO 6 ARE TAKEN AS ROTATIONS AND TRANSLATIONS.
-        #
-        #     FREQUENCIES IN CM**-1, IR INTENSITIES IN DEBYE**2/AMU-ANGSTROM**2,
-        #     REDUCED MASSES IN AMU.
-        #
-        #                          1           2           3           4           5
-        #       FREQUENCY:        52.49       41.45       17.61        9.23       10.61
-        #    REDUCED MASS:      3.92418     3.77048     5.43419     6.44636     5.50693
-        #    IR INTENSITY:      0.00013     0.00001     0.00004     0.00000     0.00003
-        #
-        # ...or in the case of a numerical Hessian job...
-        #
-        # MODES 1 TO 5 ARE TAKEN AS ROTATIONS AND TRANSLATIONS.
-        #
-        #     FREQUENCIES IN CM**-1, IR INTENSITIES IN DEBYE**2/AMU-ANGSTROM**2,
-        #     REDUCED MASSES IN AMU.
-        #
-        #                          1           2           3           4           5
-        #       FREQUENCY:         0.05        0.03        0.03       30.89       30.94
-        #    REDUCED MASS:      8.50125     8.50137     8.50136     1.06709     1.06709
-        #
-        # ...whereas PC-GAMESS has...
-        #
-        # MODES 1 TO 6 ARE TAKEN AS ROTATIONS AND TRANSLATIONS.
-        #
-        #     FREQUENCIES IN CM**-1, IR INTENSITIES IN DEBYE**2/AMU-ANGSTROM**2
-        #
-        #                          1           2           3           4           5
-        #       FREQUENCY:         5.89        1.46        0.01        0.01        0.01
-        #    IR INTENSITY:      0.00000     0.00000     0.00000     0.00000     0.00000
-        #
-        # If Raman is present we have (for PC-GAMESS)...
-        #
-        # MODES 1 TO 6 ARE TAKEN AS ROTATIONS AND TRANSLATIONS.
-        #
-        #     FREQUENCIES IN CM**-1, IR INTENSITIES IN DEBYE**2/AMU-ANGSTROM**2
-        #     RAMAN ACTIVITIES IN ANGSTROM**4/AMU, DEPOLARIZATIONS ARE DIMENSIONLESS
-        #
-        #                          1           2           3           4           5
-        #       FREQUENCY:         5.89        1.46        0.04        0.03        0.01
-        #    IR INTENSITY:      0.00000     0.00000     0.00000     0.00000     0.00000
-        # RAMAN ACTIVITY:       12.675       1.828       0.000       0.000       0.000
-        #  DEPOLARIZATION:        0.750       0.750       0.124       0.009       0.750
-        #
-        # If GAMESS-US or PC-GAMESS has not reached the stationary point we have
-        # and additional warning, repeated twice, like so (see n_water.log for an example):
-        #
-        #     *******************************************************
-        #     * THIS IS NOT A STATIONARY POINT ON THE MOLECULAR PES *
-        #     *     THE VIBRATIONAL ANALYSIS IS NOT VALID !!!       *
-        #     *******************************************************
-        #
-        # There can also be additional warnings about the selection of modes, for example:
-        #
-        # * * * WARNING, MODE 6 HAS BEEN CHOSEN AS A VIBRATION
-        #          WHILE MODE12 IS ASSUMED TO BE A TRANSLATION/ROTATION.
-        # PLEASE VERIFY THE PROGRAM'S DECISION MANUALLY!
-        #
-        if "NORMAL COORDINATE ANALYSIS IN THE HARMONIC APPROXIMATION" in line:
 
-            self.vibfreqs = []
-            self.vibirs = []
-            self.vibdisps = []
-
-            # Need to get to the modes line, which is often preceeded by
-            # a list of atomic weights and some possible warnings.
-            # Pass the warnings to the logger if they are there.
-            while not "MODES" in line:
-                self.updateprogress(inputfile, "Frequency Information")
-
-                line = next(inputfile)
-
-                # Typical Atomic Masses section printed in GAMESS
-                #               ATOMIC WEIGHTS (AMU)
-                #
-                # 1     O                15.99491
-                # 2     H                 1.00782
-                # 3     H                 1.00782
-                if "ATOMIC WEIGHTS" in line:
-                    atommasses = []
-                    self.skip_line(inputfile,['b'])
-                    # There is a blank line after ATOMIC WEIGHTS
-                    line = next(inputfile)
-                    while line.strip():
-                        temp = line.strip().split()
-                        atommasses.append(float(temp[2]))
-                        line = next(inputfile)
-                    self.set_attribute('atommasses', atommasses)
-
-                if "THIS IS NOT A STATIONARY POINT" in line:
-                    msg = "\n   This is not a stationary point on the molecular PES"
-                    msg += "\n   The vibrational analysis is not valid!!!"
-                    self.logger.warning(msg)
-                if "* * * WARNING, MODE" in line:
-                    line1 = line.strip()
-                    line2 = next(inputfile).strip()
-                    line3 = next(inputfile).strip()
-                    self.logger.warning("\n   " + "\n   ".join((line1, line2, line3)))
-
-            # In at least one case (regression zolm_dft3a.log) for older version of GAMESS-US,
-            # the header concerning the range of nodes is formatted wrong and can look like so:
-            # MODES 9 TO14 ARE TAKEN AS ROTATIONS AND TRANSLATIONS.
-            #  ... although it's unclear whether this happens for all two-digit values.
-            startrot = int(line.split()[1])
-            if len(line.split()[2]) == 2:
-                endrot = int(line.split()[3])
-            else:
-                endrot = int(line.split()[2][2:])
-
-            self.skip_line(inputfile, 'blank')
-
-            # Continue down to the first frequencies
-            line = next(inputfile)
-            # With GAMESS-US 20 APR 2017 (R1), there are 28 blank spaces,
-            # in earlier versions there used to be 26.
-            while not line.strip() or not re.search(' {26,}1', line) is not None:
-                line = next(inputfile)
-
-            while not "SAYVETZ" in line:
-                self.updateprogress(inputfile, "Frequency Information")
-
-                # Note: there may be imaginary frequencies like this (which we make negative):
-                #       FREQUENCY:       825.18 I    111.53       12.62       10.70        0.89
-                #
-                # A note for debuggers: some of these frequencies will be removed later,
-                # assumed to be translations or rotations (see startrot/endrot above).
-                for col in next(inputfile).split()[1:]:
-                    if col == "I":
-                        self.vibfreqs[-1] *= -1
-                    else:
-                        self.vibfreqs.append(float(col))
-
-                line = next(inputfile)
-
-                # Skip the symmetry (appears in newer versions), fixes bug #3476063.
-                if line.find("SYMMETRY") >= 0:
-                    line = next(inputfile)
-
-                # Skip the reduced mass (not always present).
-                if line.find("REDUCED") >= 0:
-                    if not hasattr(self, "vibrmasses"):
-                        self.vibrmasses = []
-                    self.vibrmasses.extend(list(map(float, line.strip().split()[2:])))
-                    line = next(inputfile)
-
-                # Not present in numerical Hessian calculations.
-                if line.find("IR INTENSITY") >= 0:
-                    irIntensity = map(float, line.strip().split()[2:])
-                    self.vibirs.extend([utils.convertor(x, "Debye^2/amu-Angstrom^2", "km/mol") for x in irIntensity])
-                    line = next(inputfile)
-
-                # Read in Raman vibrational intensities if present.
-                if line.find("RAMAN") >= 0:
-                    if not hasattr(self, "vibramans"):
-                        self.vibramans = []
-                    ramanIntensity = line.strip().split()
-                    self.vibramans.extend(list(map(float, ramanIntensity[2:])))
-                    depolar = next(inputfile)
-                    line = next(inputfile)
-
-                # This line seems always to be blank.
-                assert line.strip() == ''
-
-                # Extract the Cartesian displacement vectors.
-                p = [[], [], [], [], []]
-                for j in range(self.natom):
-                    q = [[], [], [], [], []]
-                    for coord in "xyz":
-                        line = next(inputfile)[21:]
-                        cols = list(map(float, line.split()))
-                        for i, val in enumerate(cols):
-                            q[i].append(val)
-                    for k in range(len(cols)):
-                        p[k].append(q[k])
-                self.vibdisps.extend(p[:len(cols)])
-
-                # Skip the Sayvetz stuff at the end.
-                for j in range(10):
-                    line = next(inputfile)
-
-                self.skip_line(inputfile, 'blank')
-                line = next(inputfile)
-
-            # Exclude rotations and translations.
-            self.vibfreqs = np.array(self.vibfreqs[:startrot-1]+self.vibfreqs[endrot:], "d")
-            self.vibirs = np.array(self.vibirs[:startrot-1]+self.vibirs[endrot:], "d")
-            self.vibdisps = np.array(self.vibdisps[:startrot-1]+self.vibdisps[endrot:], "d")
-            if hasattr(self, "vibrmasses"):
-                self.vibrmasses = np.array(self.vibrmasses[:startrot-1]+self.vibrmasses[endrot:], "d")
-            if hasattr(self, "vibramans"):
-                self.vibramans = np.array(self.vibramans[:startrot-1]+self.vibramans[endrot:], "d")
 
         if line[5:21] == "ATOMIC BASIS SET":
             self.gbasis = []
@@ -1043,7 +743,7 @@ class GAMESS(logfileparser.Logfile):
             if not hasattr(self, "nmo"):
                 self.nmo = self.nbasis
 
-            self.mocoeffs = [np.zeros((self.nmo, self.nbasis), "d")]
+            self.mocoeffs = [numpy.zeros((self.nmo, self.nbasis), "d")]
 
             readatombasis = False
             if not hasattr(self, "atombasis"):
@@ -1090,7 +790,8 @@ class GAMESS(logfileparser.Logfile):
 
                 # Eigenvalues for these orbitals (in hartrees).
                 try:
-                    self.moenergies[0].extend([utils.convertor(float(x), "hartree", "eV") for x in line.split()])
+####                self.moenergies[0].extend([utils.convertor(float(x), "hartree", "eV") for x in line.split()])
+                    self.moenergies[0].extend([float(x) for x in line.split()])
                 except:
                     self.logger.warning('MO section found but could not be parsed!')
                     break
@@ -1184,7 +885,7 @@ class GAMESS(logfileparser.Logfile):
 
             # Covers label with both dashes and stars (like regression CdtetraM1B3LYP).
             if "BETA SET" in line:
-                self.mocoeffs.append(np.zeros((self.nmo, self.nbasis), "d"))
+                self.mocoeffs.append(numpy.zeros((self.nmo, self.nbasis), "d"))
                 self.moenergies.append([])
                 self.mosyms.append([])
                 blank = next(inputfile)
@@ -1203,7 +904,8 @@ class GAMESS(logfileparser.Logfile):
                     line = next(inputfile)
                     if "properties" in line.lower():
                         break
-                    self.moenergies[1].extend([utils.convertor(float(x), "hartree", "eV") for x in line.split()])
+###                 self.moenergies[1].extend([utils.convertor(float(x), "hartree", "eV") for x in line.split()])
+                    self.moenergies[1].extend([float(x) for x in line.split()])                    
                     line = next(inputfile)
                     self.mosyms[1].extend(list(map(self.normalisesym, line.split())))
                     for i in range(self.nbasis):
@@ -1214,54 +916,8 @@ class GAMESS(logfileparser.Logfile):
                             self.mocoeffs[1][base+j, i] = float(temp[j * 11:(j + 1) * 11])
                             j += 1
                 line = next(inputfile)
-            self.moenergies = [np.array(x, "d") for x in self.moenergies]
+            self.moenergies = [numpy.array(x, "d") for x in self.moenergies]
 
-        # Natural orbital coefficients and occupation numbers, presently supported only
-        # for CIS calculations. Looks the same as eigenvectors, without symmetry labels.
-        #
-        #          --------------------
-        #          CIS NATURAL ORBITALS
-        #          --------------------
-        #
-        #                      1          2          3          4          5
-        #
-        #                    2.0158     2.0036     2.0000     2.0000     1.0000
-        #
-        #    1  O  1  S    0.000000  -0.157316   0.999428   0.164938   0.000000
-        #    2  O  1  S    0.000000   0.754402   0.004472  -0.581970   0.000000
-        # ...
-        #
-        if line[10:30] == "CIS NATURAL ORBITALS":
-
-            self.nocoeffs = np.zeros((self.nmo, self.nbasis), "d")
-            self.nooccnos = []
-
-            self.skip_line(inputfile, 'dashes')
-
-            for base in range(0, self.nmo, 5):
-
-                self.skip_lines(inputfile, ['blank', 'numbers'])
-
-                # The eigenvalues that go along with these natural orbitals are
-                # their occupation numbers. Sometimes there are blank lines before them.
-                line = next(inputfile)
-                while not line.strip():
-                    line = next(inputfile)
-                eigenvalues = map(float, line.split())
-                self.nooccnos.extend(eigenvalues)
-
-                # Orbital symemtry labels are normally here for MO coefficients.
-                line = next(inputfile)
-
-                # Now we have nbasis lines with the coefficients.
-                for i in range(self.nbasis):
-
-                    line = next(inputfile)
-                    coeffs = line[15:]
-                    j = 0
-                    while j*11+4 < len(coeffs):
-                        self.nocoeffs[base+j, i] = float(coeffs[j * 11:(j + 1) * 11])
-                        j += 1
 
         # We cannot trust this self.homos until we come to the phrase:
         #   SYMMETRIES FOR INITAL GUESS ORBITALS FOLLOW
@@ -1293,7 +949,7 @@ class GAMESS(logfileparser.Logfile):
                             self.logger.warning("Number of occupied orbitals not consistent. This is normal for ECP and FMO jobs.")
                     else:
                         self.homos = [homos]
-                self.homos = np.resize(self.homos, [1])
+                self.homos = numpy.resize(self.homos, [1])
 
         # Set the total number of atoms, only once.
         # Normally GAMESS print TOTAL NUMBER OF ATOMS, however in some cases
@@ -1330,7 +986,7 @@ class GAMESS(logfileparser.Logfile):
             # The first is for PC-GAMESS, the second for GAMESS
             # Read 1-electron overlap matrix
             if not hasattr(self, "aooverlaps"):
-                self.aooverlaps = np.zeros((self.nbasis, self.nbasis), "d")
+                self.aooverlaps = numpy.zeros((self.nbasis, self.nbasis), "d")
             else:
                 self.logger.info("Reading additional aooverlaps...")
             base = 0
@@ -1372,202 +1028,8 @@ class GAMESS(logfileparser.Logfile):
                     line = next(inputfile)
                 header = next(inputfile)
 
-        # This was used before refactoring the parser, geotargets was set here after parsing.
-        #if not hasattr(self, "geotargets"):
-        #    opttol = 1e-4
-        #    self.geotargets = np.array([opttol, 3. / opttol], "d")
-        #if hasattr(self,"geovalues"): self.geovalues = np.array(self.geovalues, "d")
-
-        # This is quite simple to parse, but some files seem to print certain lines twice,
-        # repeating the populations without charges, but not in proper order.
-        # The unrestricted calculations are a bit tricky, since GAMESS-US prints populations
-        # for both alpha and beta orbitals in the same format and with the same title,
-        # but it still prints the charges only at the very end.
-        if "TOTAL MULLIKEN AND LOWDIN ATOMIC POPULATIONS" in line:
-
-            if not hasattr(self, "atomcharges"):
-                self.atomcharges = {}
-
-            header = next(inputfile)
-            line = next(inputfile)
-
-            # It seems that when population are printed twice (without charges),
-            # there is a blank line along the way (after the first header),
-            # so let's get a flag out of that circumstance.
-            doubles_printed = line.strip() == ""
-            if doubles_printed:
-                title = next(inputfile)
-                header = next(inputfile)
-                line = next(inputfile)
-
-            # Only go further if the header had five columns, which should
-            # be the case when both populations and charges are printed.
-            # This is pertinent for both double printing and unrestricted output.
-            if not len(header.split()) == 5:
-                return
-            mulliken, lowdin = [], []
-            while line.strip():
-                if line.strip() and doubles_printed:
-                    line = next(inputfile)
-                mulliken.append(float(line.split()[3]))
-                lowdin.append(float(line.split()[5]))
-                line = next(inputfile)
-            self.atomcharges["mulliken"] = mulliken
-            self.atomcharges["lowdin"] = lowdin
-
-        #          ---------------------
-        #          ELECTROSTATIC MOMENTS
-        #          ---------------------
-        #
-        # POINT   1           X           Y           Z (BOHR)    CHARGE
-        #                -0.000000    0.000000    0.000000       -0.00 (A.U.)
-        #         DX          DY          DZ         /D/  (DEBYE)
-        #     0.000000   -0.000000    0.000000    0.000000
-        #
-        if line.strip() == "ELECTROSTATIC MOMENTS":
-
-            self.skip_lines(inputfile, ['d', 'b'])
-            line = next(inputfile)
-
-            # The old PC-GAMESS prints memory assignment information here.
-            if "MEMORY ASSIGNMENT" in line:
-                memory_assignment = next(inputfile)
-                line = next(inputfile)
-
-            # If something else ever comes up, we should get a signal from this assert.
-            assert line.split()[0] == "POINT"
-
-            # We can get the reference point from here, as well as
-            # check here that the net charge of the molecule is correct.
-            coords_and_charge = next(inputfile)
-            assert coords_and_charge.split()[-1] == '(A.U.)'
-            reference = np.array([float(x) for x in coords_and_charge.split()[:3]])
-            reference = utils.convertor(reference, 'bohr', 'Angstrom')
-            charge = int(round(float(coords_and_charge.split()[-2])))
-            self.set_attribute('charge', charge)
-
-            dipoleheader = next(inputfile)
-            assert dipoleheader.split()[:3] == ['DX', 'DY', 'DZ']
-            assert dipoleheader.split()[-1] == "(DEBYE)"
-
-            dipoleline = next(inputfile)
-            dipole = [float(d) for d in dipoleline.split()[:3]]
-
-            # The dipole is always the first multipole moment to be printed,
-            # so if it already exists, we will overwrite all moments since we want
-            # to leave just the last printed value (could change in the future).
-            if not hasattr(self, 'moments'):
-                self.moments = [reference, dipole]
-            else:
-                try:
-                    assert self.moments[1] == dipole
-                except AssertionError:
-                    self.logger.warning('Overwriting previous multipole moments with new values')
-                    self.logger.warning('This could be from post-HF properties or geometry optimization')
-                    self.moments = [reference, dipole]
-
-        # Static polarizability from a harmonic frequency calculation
-        # with $CPHF/POLAR=.TRUE.
-        if line.strip() == 'ALPHA POLARIZABILITY TENSOR (ANGSTROMS**3)':
-            if not hasattr(self, 'polarizabilities'):
-                self.polarizabilities = []
-            polarizability = np.zeros(shape=(3, 3))
-            self.skip_lines(inputfile, ['d', 'b', 'directions'])
-            for i in range(3):
-                line = next(inputfile)
-                polarizability[i, :i+1] = [float(x) for x in line.split()[1:]]
-            polarizability = utils.symmetrize(polarizability, use_triangle='lower')
-            # Convert from Angstrom**3 to bohr**3 (a.u.**3).
-            volume_convert = np.vectorize(lambda x: x * utils.convertor(1, 'Angstrom', 'bohr') ** 3)
-            polarizability = volume_convert(polarizability)
-            self.polarizabilities.append(polarizability)
-
-        # Static and dynamic polarizability from RUNTYP=TDHF.
-        if line.strip() == 'TIME-DEPENDENT HARTREE-FOCK NLO PROPERTIES':
-            if not hasattr(self, 'polarizabilities'):
-                self.polarizabilities = []
-            polarizability = np.empty(shape=(3, 3))
-            coord_to_idx = {'X': 0, 'Y': 1, 'Z': 2}
-            self.skip_lines(inputfile, ['d', 'b', 'dots'])
-            line = next(inputfile)
-            assert 'ALPHA AT' in line
-            self.skip_lines(inputfile, ['dots', 'b'])
-            for a in range(3):
-                for b in range(3):
-                    line = next(inputfile)
-                    tokens = line.split()
-                    i, j = coord_to_idx[tokens[1][0]], coord_to_idx[tokens[1][1]]
-                    polarizability[i, j] = tokens[3]
-            self.polarizabilities.append(polarizability)
-
-        # Extract thermochemistry
-
-        #      -------------------------------
-        #      THERMOCHEMISTRY AT T=  298.15 K
-        #      -------------------------------
-
-        #  USING IDEAL GAS, RIGID ROTOR, HARMONIC NORMAL MODE APPROXIMATIONS.
-        #  P=  1.01325E+05 PASCAL.
-        #  ALL FREQUENCIES ARE SCALED BY   1.00000
-        #  THE MOMENTS OF INERTIA ARE (IN AMU*BOHR**2)
-        #               1.77267             4.73429             6.50696
-        #  THE ROTATIONAL SYMMETRY NUMBER IS  1.0
-        #  THE ROTATIONAL CONSTANTS ARE (IN GHZ)
-        #    1017.15677   380.85747   277.10144
-        #       7 -      9 VIBRATIONAL MODES ARE USED IN THERMOCHEMISTRY.
-        #  THE HARMONIC ZERO POINT ENERGY IS (SCALED BY   1.000)
-        #         0.020711 HARTREE/MOLECULE     4545.618665 CM**-1/MOLECULE 
-        #        12.996589 KCAL/MOL               54.377728 KJ/MOL
-
-        #                Q               LN Q
-        #  ELEC.     1.00000E+00       0.000000
-        #  TRANS.    3.00431E+06      14.915558
-        #  ROT.      8.36512E+01       4.426656
-        #  VIB.      1.00067E+00       0.000665
-        #  TOT.      2.51481E+08      19.342880
-
-        #               E         H         G         CV        CP        S
-        #            KJ/MOL    KJ/MOL    KJ/MOL   J/MOL-K   J/MOL-K   J/MOL-K
-        #  ELEC.      0.000     0.000     0.000     0.000     0.000     0.000
-        #  TRANS.     3.718     6.197   -36.975    12.472    20.786   144.800
-        #  ROT.       3.718     3.718   -10.973    12.472    12.472    49.277
-        #  VIB.      54.390    54.390    54.376     0.296     0.296     0.046
-        #  TOTAL     61.827    64.306     6.428    25.240    33.554   194.123
-        #  VIB. THERMAL CORRECTION E(T)-E(0) = H(T)-H(0) =        12.071 J/MOL
-
-        #               E         H         G         CV        CP        S
-        #          KCAL/MOL  KCAL/MOL  KCAL/MOL CAL/MOL-K CAL/MOL-K CAL/MOL-K
-        #  ELEC.      0.000     0.000     0.000     0.000     0.000     0.000
-        #  TRANS.     0.889     1.481    -8.837     2.981     4.968    34.608
-        #  ROT.       0.889     0.889    -2.623     2.981     2.981    11.777
-        #  VIB.      12.999    12.999    12.996     0.071     0.071     0.011
-        #  TOTAL     14.777    15.369     1.536     6.032     8.020    46.396
-        #  VIB. THERMAL CORRECTION E(T)-E(0) = H(T)-H(0) =         2.885 CAL/MOL        
-
-        if "THERMOCHEMISTRY AT T=" in line:
-            match = re.search(r"THERMOCHEMISTRY AT T=(.*)K", line)
-            if match:
-                self.set_attribute('temperature', float(match.group(1)))
-        if "PASCAL." in line:
-            match = re.search(r"P=(.*)PASCAL.", line)
-            if match:
-                self.set_attribute('pressure', float(match.group(1))/1.01325e5)
-
-        if "KCAL/MOL  KCAL/MOL  KCAL/MOL CAL/MOL-K CAL/MOL-K CAL/MOL-K" in line:
-            self.skip_lines(inputfile,["ELEC","TRANS","ROT","VIB"])
-            line = next(inputfile) #TOTAL
-            thermoValues = line.split()
-
-            if hasattr(self, 'scfenergies'):
-                electronicEnergy = utils.convertor(self.scfenergies[-1],"eV","hartree")
-            else:
-                electronicEnergy = 0  # GAMESS  prints thermochemistry at the end, so it should have a value for this already
-            self.set_attribute('enthalpy', electronicEnergy + utils.convertor(float(thermoValues[2]),"kcal/mol","hartree"))
-            self.set_attribute('freeenergy', electronicEnergy + utils.convertor(float(thermoValues[3]),"kcal/mol","hartree"))
-            self.set_attribute('entropy', utils.convertor(float(thermoValues[6])/1000.0,"kcal/mol","hartree"))
 
 
         if line[:30] == ' ddikick.x: exited gracefully.'\
-                or line[:41] == ' EXECUTION OF FIREFLY TERMINATED NORMALLY'\
                 or line[:40] == ' EXECUTION OF GAMESS TERMINATED NORMALLY':
             self.metadata['success'] = True

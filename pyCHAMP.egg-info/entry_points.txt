@@ -1,0 +1,4 @@
+[console_scripts]
+ccget = pychamp.scripts.ccget:ccget
+ccwrite = pychamp.scripts.ccwrite:main
+

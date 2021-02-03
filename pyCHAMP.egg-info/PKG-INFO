@@ -1,0 +1,15 @@
+Metadata-Version: 1.1
+Name: pyCHAMP
+Version: 1.0
+Summary: UNKNOWN
+Home-page: UNKNOWN
+Author: UNKNOWN
+Author-email: UNKNOWN
+License: UNKNOWN
+Description: formatted for the use in CHAMP code.
+        
+Platform: UNKNOWN
+Classifier: Development Status :: Production
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering :: Chemistry
+Classifier: Topic :: Software Development :: Libraries :: Python Modules

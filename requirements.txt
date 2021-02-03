@@ -1,0 +1,7 @@
+packaging>=19.0
+numpy
+
+# methods
+scipy
+periodictable
+
