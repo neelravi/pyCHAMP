@@ -409,6 +409,25 @@ class ccData:
         return Electrons(self).count()
 
     @property
+    def number_alpha(self):
+        return Electrons(self).alpha()
+
+    @property
+    def number_beta(self):
+        return Electrons(self).beta()        
+
+    @property
+    def number_alpha_valence(self):
+        return Electrons(self).alpha_valence() 
+
+    @property
+    def number_beta_valence(self):
+        return Electrons(self).beta_valence()        
+
+
+
+
+    @property
     def closed_shell(self):
         return orbitals.Orbitals(self).closed_shell()
 

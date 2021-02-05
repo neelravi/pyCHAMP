@@ -12,9 +12,20 @@ for filename in [ "GAMESS01.txt"]:
 
     data = pychamp.io.qcread(filename)
 
-#    print(dir(data))
+    print(dir(data))
 #    print(f"There are {data.natom} atoms and {data.nbasis} number of cartesian basis")
-#    print(f"There are charges {data.charge} ")
+    print(f"There are core electrons {data.coreelectrons} ")
+
+
+    print(f"There are {data.number_alpha} ")    
+    print(f"There are {data.number_beta} ")        
+
+    print(f"There are {data.number_alpha_valence} ")    
+    print(f"There are {data.number_beta_valence} ")        
+
+
+
+
 
 #    for element in range(len(data.atomnos)):
 #        print(data.atomnos[element], data.atomcoords[0][element])
