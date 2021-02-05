@@ -487,6 +487,53 @@ def write_champ_old_lcao(qcobj, outputdest=None):
         return None
 
 
+def write_champ_old_det(qcobj, outputdest=None):
+    """Writes the parsed determinants data from the quantum 
+    chemistry calculation to old format of champ .det file.
+
+    Inputs:
+        qcobj - Either a job (from ccopen) or a data (from job.parse()) object
+        outputdest - A filename or file object for writing. Example, "rhf.det", "cn3.det"
+
+    Returns:
+        None as a function value
+    """
+    
+    # If the output filename is mentioned, then write to that file
+    # This will write in the old format that CHAMP recognizes.
+
+
+    if outputdest is not None:
+        if isinstance(outputdest, str):
+            ## Write down a symmetry file in old champ format
+            with open(outputdest + ".det", 'w') as file:
+
+                if qcobj.scftype in ["RHF", "UHF", "ROHF"]:
+
+                    file.write(f"&electrons  nelec {qcobj.number_alpha_valence+qcobj.number_beta_valence} nup {qcobj.number_alpha_valence} \n" )                
+                    file.write(f"\n" ) 
+                    file.write(f"determinants {1} {1} \n")
+                    file.write(f"      {1:.6f} \n")                                                        
+
+                    alpha_occupation = np.arange(qcobj.number_alpha_valence) + 1
+                    beta_occupation  = np.arange(qcobj.number_alpha_valence) + 1                    
+                    np.savetxt(file, np.row_stack((alpha_occupation, beta_occupation)), fmt='  %i', delimiter='  ', newline='')
+                  
+                    file.write("\n")
+                    file.write("end\n")                
+                    file.close()
+
+                elif qcobj.scftype in ["MCSCF"]:
+                    raise Warning("being implemented")
+
+        elif isinstance(outputdest, io.IOBase):
+            outputdest.write(output)
+        else:
+            raise ValueError
+    # If outputdest is None, return a string representation of the output.
+    else:
+        return None
+
 
 
 

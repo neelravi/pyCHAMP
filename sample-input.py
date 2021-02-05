@@ -16,6 +16,7 @@ for filename in [ "GAMESS01.txt"]:
 #    print(f"There are {data.natom} atoms and {data.nbasis} number of cartesian basis")
     print(f"There are core electrons {data.coreelectrons} ")
 
+    print(f"There are {data.nelectrons} ")    
 
     print(f"There are {data.number_alpha} ")    
     print(f"There are {data.number_beta} ")        
@@ -23,13 +24,12 @@ for filename in [ "GAMESS01.txt"]:
     print(f"There are {data.number_alpha_valence} ")    
     print(f"There are {data.number_beta_valence} ")        
 
-
+    print(f"There are {data.scftype} ")    
 
 
 
 #    for element in range(len(data.atomnos)):
 #        print(data.atomnos[element], data.atomcoords[0][element])
-
 
 
     # print(f"The MO coefficients {data.mocoeffs[0][0]}")
@@ -58,6 +58,7 @@ for filename in [ "GAMESS01.txt"]:
     pychamp.io.write_champ_old_sym(data, outputdest="CN3_" + basename)
     pychamp.io.write_champ_old_geo(data, outputdest="CN3_" + basename)    
     pychamp.io.write_champ_old_lcao(data, outputdest="CN3_" + basename)        
+    pychamp.io.write_champ_old_det(data, outputdest="CN3_" + basename)            
 
 
     # print("sym_labels", len(counts), len(data.mosyms[0]))

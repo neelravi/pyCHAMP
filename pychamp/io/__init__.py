@@ -12,5 +12,6 @@ from pychamp.io.ccio import qcwrite
 from pychamp.io.ccio import write_champ_old_sym
 from pychamp.io.ccio import write_champ_old_geo
 from pychamp.io.ccio import write_champ_old_lcao
+from pychamp.io.ccio import write_champ_old_det
 
 from pychamp.io.ccio import URL_PATTERN

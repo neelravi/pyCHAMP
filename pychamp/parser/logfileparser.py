@@ -171,9 +171,8 @@ def openlogfile(filename, object=None):
 class Logfile(ABC):
     """Abstract class for logfile objects.
 
-    Subclasses defined by cclib:
-        ADF, DALTON, GAMESS, GAMESSUK, Gaussian, Jaguar, Molpro, MOPAC,
-        NWChem, ORCA, Psi, Q-Chem
+    Subclasses defined by qclib:
+        GAMESS, GAMESSUK
     """
 
     def __init__(self, source, loglevel=logging.ERROR, logname="Log",

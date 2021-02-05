@@ -81,6 +81,7 @@ class ccData:
         scfenergies -- molecular electronic energies after SCF (Hartree-Fock, DFT) (array[1], eV)
         scftargets -- targets for convergence of the SCF (array[2])
         scfvalues -- current values for convergence of the SCF (list of arrays[2])
+        scftype -- SCFTYPE keyword, whether RHF, UHF, ROHF, MCSCF (string))        
         temperature -- temperature used for Thermochemistry (float, kelvin)
         time -- time in molecular dynamics and other trajectories (array[1], fs)
         transprop -- all absorption and emission spectra (dictionary {name:(etenergies, etoscs)})
@@ -162,6 +163,7 @@ class ccData:
        "scfenergies":      Attribute(numpy.ndarray,    'scf energies',                'optimization:scf'),
        "scftargets":       Attribute(numpy.ndarray,    'targets',                     'optimization:scf'),
        "scfvalues":        Attribute(list,             'values',                      'optimization:scf'),
+       "scftype":          Attribute(str,              'type of scf calculation',     'optimization:scf'),       
        "temperature":      Attribute(float,            'temperature',                 'properties'),
        "time":             Attribute(numpy.ndarray,    'time',                        'N/A'),
        "transprop":        Attribute(dict,             'electronic transitions',      'transitions'),
@@ -328,15 +330,6 @@ class ccData:
                             *args, **kwargs)
         return outputstr
 
-    def writejson(self, filename=None, indices=None):
-        """Write parsed attributes to a JSON file."""
-        return self.write(filename=filename, indices=indices,
-                          outputtype='cjson')
-
-    def writecml(self, filename=None, indices=None):
-        """Write parsed attributes to a CML file."""
-        return self.write(filename=filename, indices=indices,
-                          outputtype='cml')
 
     def writexyz(self, filename=None, indices=None):
         """Write parsed attributes to an XML file."""
@@ -423,9 +416,6 @@ class ccData:
     @property
     def number_beta_valence(self):
         return Electrons(self).beta_valence()        
-
-
-
 
     @property
     def closed_shell(self):

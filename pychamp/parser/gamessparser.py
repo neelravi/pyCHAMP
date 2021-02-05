@@ -116,6 +116,16 @@ class GAMESS(logfileparser.Logfile):
             if len(self.metadata["methods"]) == 0:
                 self.metadata["methods"].append(method)
 
+        # extract the calculation method. Check if it is MCSCF
+        if line[1:7] == "SCFTYP":
+            method = line.split()[0][7:]
+            if method == "MCSCF":
+                self.scftype = method
+                
+                if len(self.metadata["methods"]) == 0:
+                    self.metadata["methods"].append(method)
+
+
         # extract the basis set name
         if line[5:11] == "GBASIS":
             basnm1 = line.split()[0][7:]
