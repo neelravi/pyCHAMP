@@ -379,7 +379,35 @@ def write_champ_old_sym(qcobj, outputdest=None):
                 file.write("end\n")                
             file.close()
 
+        elif isinstance(outputdest, io.IOBase):
+            outputdest.write(output)
+        else:
+            raise ValueError
+    # If outputdest is None, return a string representation of the output.
+    else:
+        return None
 
+
+def write_champ_old_geo(qcobj, outputdest=None):
+    """Writes the parsed geometry data from the quantum 
+    chemistry calculation to old format of champ .geo  file.
+
+    Inputs:
+        qcobj - Either a job (from ccopen) or a data (from job.parse()) object
+        outputdest - A filename or file object for writing. Example, "rhf.geo", "cn3.geo"
+
+    Returns:
+        None as a function value
+    """
+
+   
+    # If the output filename is mentioned, then write to that file
+    # This will write in the old format that CHAMP recognizes.
+
+
+    if outputdest is not None:
+        if isinstance(outputdest, str):
+            ## Write down a symmetry file in old champ format
             with open(outputdest + ".geo", 'w') as file:
                 
                 # header line printed below                
@@ -412,7 +440,43 @@ def write_champ_old_sym(qcobj, outputdest=None):
                 file.write("end\n")                
             file.close()
 
+        elif isinstance(outputdest, io.IOBase):
+            outputdest.write(output)
+        else:
+            raise ValueError
+    # If outputdest is None, return a string representation of the output.
+    else:
+        return None
 
+
+def write_champ_old_lcao(qcobj, outputdest=None):
+    """Writes the parsed geometry data from the quantum 
+    chemistry calculation to old format of champ .lcao  file.
+
+    Inputs:
+        qcobj - Either a job (from ccopen) or a data (from job.parse()) object
+        outputdest - A filename or file object for writing. Example, "rhf.lcao", "cn3.lcao"
+
+    Returns:
+        None as a function value
+    """
+
+   
+    # If the output filename is mentioned, then write to that file
+    # This will write in the old format that CHAMP recognizes.
+
+
+    if outputdest is not None:
+        if isinstance(outputdest, str):
+            ## Write down a symmetry file in old champ format
+            with open(outputdest + ".lcao", 'w') as file:
+                      
+                # header line printed below                
+                file.write("# Comments about the system being studied \n")
+                file.write("lcao " + str(len(qcobj.mocoeffs[0][0])) + " " + str(len(qcobj.mocoeffs[0][0])) + "\n" )
+                np.savetxt(file, qcobj.mocoeffs[0][:])
+                file.write("end\n")                
+            file.close()
 
         elif isinstance(outputdest, io.IOBase):
             outputdest.write(output)
@@ -421,6 +485,8 @@ def write_champ_old_sym(qcobj, outputdest=None):
     # If outputdest is None, return a string representation of the output.
     else:
         return None
+
+
 
 
 
