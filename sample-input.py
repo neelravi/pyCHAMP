@@ -65,19 +65,21 @@ for filename in [ "piece.txt"]:
         file.write("# Comments about the system being studied \n")
         file.write("&atoms nctype " + str(len(set(data.atomnos))) + " natom " + str(data.natom) + "\n" )
         
-        element_list = ""
-        for i in np.unique(data.atomnos):
-            element_list += " " + str(np.where(np.unique(data.atomnos) == i)[0][0]+1) + " " + str(pt.elements[i].symbol)        
-        file.write("&atoms_types " + element_list + "\n" )                
+
+        # Get the list of unique elements of the list and the index of them (note python indenxing starts at 0)
+        unique_elements, indices = np.unique(data.atomnos, return_inverse=True)
+
+        element_string = ""
+        for i, val in enumerate(unique_elements):
+            element_string += " " + str(i+1) + " " + str(pt.elements[val].symbol)        
+        file.write("&atoms_types " + element_string + "\n" )                
         file.write("geometry\n")                
 
         coords = [[data.atomcoords[0][i][j] for j in range(3)] for i in range(len(data.atomnos))]
         coords = np.array(coords)/0.5291772109 #angstrom_to_bohr conversion
 
-
         for element in range(len(data.atomnos)):
-            unique_mapping = str(np.where(np.unique(data.atomnos) == data.atomnos[element])[0][0]+1) 
-            file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], unique_mapping)) 
+            file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], indices[element]+1)) 
 
         file.write("end\n")                
         file.write("znuc\n")                                
