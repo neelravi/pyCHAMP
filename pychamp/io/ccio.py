@@ -7,7 +7,7 @@ import io
 import os
 import sys
 import re
-import numpy
+import numpy as np
 from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
 from urllib.error import URLError
@@ -20,6 +20,15 @@ from pychamp.parser.gamessparser import GAMESS
 
 from pychamp.io import xyzreader
 from pychamp.io import xyzwriter
+
+#  Core is needed to compute the core number of electrons
+from pychamp.parser.utils import Core
+#  periodic table is essential here
+import periodictable as pt
+
+np.set_printoptions(threshold=sys.maxsize)
+
+
 
 _has_cclib2openbabel = find_package("openbabel")
 if _has_cclib2openbabel:
@@ -350,7 +359,7 @@ def write_champ_old_sym(qcobj, outputdest=None):
             ## Write down a symmetry file in old champ format
             with open(outputdest + ".sym", 'w') as file:
                 
-                values, counts = numpy.unique(qcobj.mosyms, return_counts=True)                
+                values, counts = np.unique(qcobj.mosyms, return_counts=True)                
                 # point group symmetry independent line printed below                
                 file.write("sym_labels " + str(len(counts)) + " " + str(len(qcobj.mosyms[0]))+"\n")
 
@@ -371,23 +380,38 @@ def write_champ_old_sym(qcobj, outputdest=None):
             file.close()
 
 
-            ## Write down a geometry file in old champ format
             with open(outputdest + ".geo", 'w') as file:
                 
                 # header line printed below                
                 file.write("# Comments about the system being studied \n")
                 file.write("&atoms nctype " + str(len(set(qcobj.atomnos))) + " natom " + str(qcobj.natom) + "\n" )
-                file.write("&atoms_types " + str(len(set(qcobj.atomnos))) + " natom " + str(qcobj.natom) + "\n" )                
+                
+
+                # Get the list of unique elements of the list and the index of them (note python indenxing starts at 0)
+                unique_elements, indices = np.unique(qcobj.atomnos, return_inverse=True)
+
+                element_string = ""
+                for i, val in enumerate(unique_elements):
+                    element_string += " " + str(i+1) + " " + str(pt.elements[val].symbol)        
+                file.write("&atoms_types " + element_string + "\n" )                
                 file.write("geometry\n")                
 
-                # for element in range(len(data.atomnos)):
-                #     print(data.atomnos[element], data.atomcoords[0][element])
+                coords = [[qcobj.atomcoords[0][i][j] for j in range(3)] for i in range(len(qcobj.atomnos))]
+                coords = np.array(coords)/0.5291772109 #angstrom_to_bohr conversion
+
+                for element in range(len(qcobj.atomnos)):
+                    file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], indices[element]+1)) 
 
                 file.write("end\n")                
                 file.write("znuc\n")                                
+                core  = Core()
+                for element in np.unique(qcobj.atomnos):
+                    file.write("{: 0.6f} ".format(core.valence[element]) ) 
 
+                file.write("\n")                
                 file.write("end\n")                
             file.close()
+
 
 
         elif isinstance(outputdest, io.IOBase):

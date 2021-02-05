@@ -1,9 +1,7 @@
 import pychamp
 import numpy as np
 import sys
-import periodictable as pt
-from pychamp.parser.utils import Core
-np.set_printoptions(threshold=sys.maxsize)
+
 
 
 
@@ -43,7 +41,7 @@ for filename in [ "piece.txt"]:
     
     
 
-#    pychamp.io.write_champ_old_sym(data, outputdest="rhf" + filename)
+    pychamp.io.write_champ_old_sym(data, outputdest="rhf" + filename)
 
 
     # print("sym_labels", len(counts), len(data.mosyms[0]))
@@ -59,34 +57,34 @@ for filename in [ "piece.txt"]:
     #                 print (val)
     #     print ()
     # print("end")                
-    with open("test.geo", 'w') as file:
+    # with open("test.geo", 'w') as file:
         
-        # header line printed below                
-        file.write("# Comments about the system being studied \n")
-        file.write("&atoms nctype " + str(len(set(data.atomnos))) + " natom " + str(data.natom) + "\n" )
+    #     # header line printed below                
+    #     file.write("# Comments about the system being studied \n")
+    #     file.write("&atoms nctype " + str(len(set(data.atomnos))) + " natom " + str(data.natom) + "\n" )
         
 
-        # Get the list of unique elements of the list and the index of them (note python indenxing starts at 0)
-        unique_elements, indices = np.unique(data.atomnos, return_inverse=True)
+    #     # Get the list of unique elements of the list and the index of them (note python indenxing starts at 0)
+    #     unique_elements, indices = np.unique(data.atomnos, return_inverse=True)
 
-        element_string = ""
-        for i, val in enumerate(unique_elements):
-            element_string += " " + str(i+1) + " " + str(pt.elements[val].symbol)        
-        file.write("&atoms_types " + element_string + "\n" )                
-        file.write("geometry\n")                
+    #     element_string = ""
+    #     for i, val in enumerate(unique_elements):
+    #         element_string += " " + str(i+1) + " " + str(pt.elements[val].symbol)        
+    #     file.write("&atoms_types " + element_string + "\n" )                
+    #     file.write("geometry\n")                
 
-        coords = [[data.atomcoords[0][i][j] for j in range(3)] for i in range(len(data.atomnos))]
-        coords = np.array(coords)/0.5291772109 #angstrom_to_bohr conversion
+    #     coords = [[data.atomcoords[0][i][j] for j in range(3)] for i in range(len(data.atomnos))]
+    #     coords = np.array(coords)/0.5291772109 #angstrom_to_bohr conversion
 
-        for element in range(len(data.atomnos)):
-            file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], indices[element]+1)) 
+    #     for element in range(len(data.atomnos)):
+    #         file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], indices[element]+1)) 
 
-        file.write("end\n")                
-        file.write("znuc\n")                                
-        core  = Core()
-        for element in np.unique(data.atomnos):
-            file.write("{: 0.6f} ".format(core.valence[element]) ) 
+    #     file.write("end\n")                
+    #     file.write("znuc\n")                                
+    #     core  = Core()
+    #     for element in np.unique(data.atomnos):
+    #         file.write("{: 0.6f} ".format(core.valence[element]) ) 
 
-        file.write("\n")                
-        file.write("end\n")                
-    file.close()
+    #     file.write("\n")                
+    #     file.write("end\n")                
+    # file.close()

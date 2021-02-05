@@ -1,8 +1,16 @@
 # Comments about the system being studied 
 &atoms nctype 3 natom 8
-&atoms_types 3 natom 8
-check &atoms_types  + {len(set(qcobj.atomnos))}   natom   {str(qcobj.natom)} + 
+&atoms_types  1 H 2 C 3 N
 geometry
+-2.188467  0.000000 -0.329219 3 
+ 2.188467  0.000000 -0.329219 3 
+ 0.000000  0.000000  0.801556 2 
+ 0.000000  0.000000  2.851037 1 
+-2.377956  0.000000 -2.227018 1 
+ 2.377956  0.000000 -2.227018 1 
+-3.789112  0.000000  0.701359 1 
+ 3.789112  0.000000  0.701359 1 
 end
 znuc
+ 1.000000  4.000000  5.000000 
 end
