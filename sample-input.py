@@ -2,7 +2,7 @@ import pychamp
 import numpy as np
 import sys
 import periodictable as pt
-
+from pychamp.parser.utils import Core
 np.set_printoptions(threshold=sys.maxsize)
 
 
@@ -11,16 +11,12 @@ for filename in [ "piece.txt"]:
 
     data = pychamp.io.qcread(filename)
 
-    print(dir(data))
-    print(f"There are {data.natom} atoms and {data.nbasis} number of cartesian basis")
-    print(f"There are charges {data.charge} ")
+#    print(dir(data))
+#    print(f"There are {data.natom} atoms and {data.nbasis} number of cartesian basis")
+#    print(f"There are charges {data.charge} ")
 
-    for element in range(len(data.atomnos)):
-        print(data.atomnos[element], data.atomcoords[0][element])
-
-    
-
-
+#    for element in range(len(data.atomnos)):
+#        print(data.atomnos[element], data.atomcoords[0][element])
 
 
 
@@ -75,13 +71,20 @@ for filename in [ "piece.txt"]:
         file.write("&atoms_types " + element_list + "\n" )                
         file.write("geometry\n")                
 
-        for element in range(len(data.atomnos)):
-            file.write( {} % format {data.atomnos[element]} ) 
+        coords = [[data.atomcoords[0][i][j] for j in range(3)] for i in range(len(data.atomnos))]
+        coords = np.array(coords)/0.5291772109 #angstrom_to_bohr conversion
 
-            file.write("{} {}" .format( data.atomnos[element], data.atomcoords[0][element])) 
+
+        for element in range(len(data.atomnos)):
+            unique_mapping = str(np.where(np.unique(data.atomnos) == data.atomnos[element])[0][0]+1) 
+            file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], unique_mapping)) 
 
         file.write("end\n")                
         file.write("znuc\n")                                
+        core  = Core()
+        for element in np.unique(data.atomnos):
+            file.write("{: 0.6f} ".format(core.valence[element]) ) 
 
+        file.write("\n")                
         file.write("end\n")                
     file.close()

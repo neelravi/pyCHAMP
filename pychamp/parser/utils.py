@@ -210,6 +210,34 @@ class PeriodicTable:
                 self.element.append(e.symbol)
                 self.number[e.symbol] = e.number
 
+class Core:
+    """calulates the core number of electrons."""
+
+    def __init__(self):
+        self.valence = {} 
+        self.core_electrons = {}
+        
+        for e in periodictable.elements:
+            if e.symbol != 'n':
+                if e.number <= 1:
+                    self.valence[e.number] = e.number
+                    self.core_electrons[e.number] = 0
+                elif e.number <=9:
+                    self.valence[e.number] = e.number-2
+                    self.core_electrons[e.number] = 2
+                elif e.number <=17:
+                    self.valence[e.number] = e.number-10
+                    self.core_electrons[e.number] = 10
+                elif e.number <=35:
+                    self.valence[e.number] = e.number-18
+                    self.core_electrons[e.number] = 18
+                else:
+                    ValueError ("Transition elements not implemented")
+                    return
+
+
+
+
 
 class WidthSplitter:
     """Split a line based not on a character, but a given number of field
