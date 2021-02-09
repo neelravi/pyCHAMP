@@ -338,18 +338,6 @@ def write_champ_old_sym(qcobj, outputdest=None):
     Returns:
         None as a function value
     """
-
-    # # Is qcobj an job object (unparsed), or is it a ccdata object (parsed)?
-    # if isinstance(qcobj, logfileparser.Logfile):
-    #     jobfilename = qcobj.filename
-    #     ccdata = qcobj.parse()
-    # elif isinstance(qcobj, data.ccData):
-    #     jobfilename = None
-    #     ccdata = qcobj
-    # else:
-    #     raise ValueError
-
-    
     # If the output filename is mentioned, then write to that file
     # This will write in the old format that CHAMP recognizes.
 
@@ -363,16 +351,17 @@ def write_champ_old_sym(qcobj, outputdest=None):
                 # point group symmetry independent line printed below                
                 file.write("sym_labels " + str(len(counts)) + " " + str(len(qcobj.mosyms[0]))+"\n")
 
-                # C2V irreducible representations of various groups
-                c2v = { "A1":1, "B1":2, "B2":3, "A2":4 }  
-                if all(irreps in qcobj.mosyms[0] for irreps in ["A1", "B1", "B2", "A2"]):
-                    file.write("1 A1 4 A2 2 B1 3 B2\n")   # This defines the rule
-#                     for key, val in c2v.items():
-# #                        [print(str(val)+" ") for item in qcobj.mosyms[0] if key == item]                        
-#                         [file.write(str(val)+" ") for item in qcobj.mosyms[0] if key == item]
+                irrep_string = ""
+                irrep_correspondence = {}
+                for i, val in enumerate(values):
+                    irrep_correspondence[val] = i+1
+                    irrep_string += " " + str(i+1) + " " + str(val)
+
+                if all(irreps in qcobj.mosyms[0] for irreps in values):
+                    file.write(f"{irrep_string} \n")   # This defines the rule
 
                     for item in qcobj.mosyms[0]:
-                        for key, val in c2v.items():
+                        for key, val in irrep_correspondence.items():
                             if item == key:
                                 file.write(str(val)+" ")
                     file.write("\n")
