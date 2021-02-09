@@ -121,7 +121,7 @@ class GAMESS(logfileparser.Logfile):
             method = line.split()[0][7:]
             if method == "MCSCF":
                 self.scftype = method
-                
+
                 if len(self.metadata["methods"]) == 0:
                     self.metadata["methods"].append(method)
 

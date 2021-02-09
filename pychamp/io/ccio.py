@@ -416,24 +416,32 @@ def write_champ_old_geo(qcobj, outputdest=None):
                 
 
                 # Get the list of unique elements of the list and the index of them (note python indenxing starts at 0)
-                unique_elements, indices = np.unique(qcobj.atomnos, return_inverse=True)
+                unique_elements = list(dict.fromkeys(qcobj.atomnos))
+                indices = [unique_elements.index(i) for i in qcobj.atomnos]
 
                 element_string = ""
                 for i, val in enumerate(unique_elements):
                     element_string += " " + str(i+1) + " " + str(pt.elements[val].symbol)        
-                file.write("&atoms_types " + element_string + "\n" )                
+                file.write("&atom_types " + element_string + "\n" )                
                 file.write("geometry\n")                
 
                 coords = [[qcobj.atomcoords[0][i][j] for j in range(3)] for i in range(len(qcobj.atomnos))]
                 coords = np.array(coords)/0.5291772109 #angstrom_to_bohr conversion
 
+
                 for element in range(len(qcobj.atomnos)):
-                    file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], indices[element]+1)) 
+                    for i in range(3):
+                        file.write (f"{coords[element][i]: 0.6f} ")
+                    file.write(f" {indices[element]+1} \n") 
+
+#                # Alternate version for better readability
+#                for element in range(len(qcobj.atomnos)):
+#                    file.write("{: 0.6f} {: 0.6f} {: 0.6f} {} \n".format(coords[element][0], coords[element][1], coords[element][2], indices[element]+1)) 
 
                 file.write("end\n")                
                 file.write("znuc\n")                                
                 core  = Core()
-                for element in np.unique(qcobj.atomnos):
+                for element in unique_elements:
                     file.write("{: 0.6f} ".format(core.valence[element]) ) 
 
                 file.write("\n")                

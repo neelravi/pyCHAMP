@@ -14,17 +14,17 @@ for filename in [ "GAMESS01.txt"]:
 
     print(dir(data))
 #    print(f"There are {data.natom} atoms and {data.nbasis} number of cartesian basis")
-    print(f"There are core electrons {data.coreelectrons} ")
+    # print(f"There are core electrons {data.coreelectrons} ")
 
-    print(f"There are {data.nelectrons} ")    
+    # print(f"There are {data.nelectrons} ")    
 
-    print(f"There are {data.number_alpha} ")    
-    print(f"There are {data.number_beta} ")        
+    # print(f"There are {data.number_alpha} ")    
+    # print(f"There are {data.number_beta} ")        
 
-    print(f"There are {data.number_alpha_valence} ")    
-    print(f"There are {data.number_beta_valence} ")        
+    # print(f"There are {data.number_alpha_valence} ")    
+    # print(f"There are {data.number_beta_valence} ")        
 
-    print(f"There are {data.scftype} ")    
+    # print(f"There are {data.scftype} ")    
 
 
 
@@ -36,7 +36,8 @@ for filename in [ "GAMESS01.txt"]:
 
     # print(f"The MO energies {data.moenergies}")
 
-    # print(f"The MO symmetries {data.mosyms}")
+    print(f"The MO symmetries {data.nmo}")
+#    print(f"The MO symmetries {data.mosyms}")    
 
     # values, counts = numpy.unique(data.mosyms, return_counts=True)
 
